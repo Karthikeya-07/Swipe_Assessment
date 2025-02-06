@@ -23,9 +23,3 @@ class GlobalUtility {
         }
     }
 }
-
-extension String {
-    func toDouble() -> Double? {
-        Double(self)
-    }
-}
