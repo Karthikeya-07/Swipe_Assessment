@@ -22,13 +22,16 @@ struct AddProductView: View {
     @State var productTypeErrorMessage: String? = nil
     @State var priceModel: TextFieldInputModel = .init(title: "Price", text: "", isNumber: true)
     @State var taxModel: TextFieldInputModel = .init(title: "Tax", text: "", isNumber: true)
+    var themeColor: Color = .gray.opacity(0.5)
     var productTypes: [String] = ["Electronics", "Clothing", "Sports"]
+    
     var body: some View {
         VStack(alignment: .center) {
             VStack {
+                /// Circular image picker to select a product image.
                 Circle()
-                    .stroke(style: .init(lineWidth: 2, dash: [2, 3]))
-                    .foregroundStyle(selectedImage == nil ? .gray.opacity(0.5) : .clear)
+                    .stroke(lineWidth: 2.5)
+                    .foregroundStyle(selectedImage == nil ? themeColor : .clear)
                     .frame(width: 125, height: 125)
                     .overlay {
                         if let selectedImage {
@@ -36,21 +39,21 @@ struct AddProductView: View {
                                 .resizable()
                                 .clipped()
                         } else {
-                            VStack {
-                                Image(systemName: "plus")
+                                Image(systemName: "camera")
                                     .resizable()
-                                    .foregroundStyle(.gray.opacity(0.5))
-                                    .frame(width: 25, height: 25)
-                                Text("Add Image")
-                                    .foregroundStyle(.gray.opacity(0.5))
-                            }
+                                    .scaledToFit()
+                                    .foregroundStyle(themeColor)
+                                    .frame(width: 40, height: 40)
                         }
                     }
                     .clipShape(Circle())
                     .onTapGesture { showImagePicker = true }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
             VStack(alignment: .leading, spacing: .zero) {
                 CustomTextField(inputModel: $productNameModel)
+                /// Dropdown menu for selecting product type.
                 Menu {
                     ForEach(productTypes.indices, id: \.self) { i in
                         Button(productTypes[i]) {
@@ -60,7 +63,7 @@ struct AddProductView: View {
                 } label: {
                     dropdownLabel
                 }
-                if let productTypeErrorMessage {
+                if let productTypeErrorMessage, !productTypeErrorMessage.isEmpty {
                     Text(productTypeErrorMessage)
                         .foregroundStyle(.red)
                 }
@@ -68,6 +71,7 @@ struct AddProductView: View {
                 CustomTextField(inputModel: $taxModel)
             }
             .padding(.bottom, 20)
+            /// Button to cancel the product addition.
             Button {
                 dismiss()
             } label: {
@@ -83,6 +87,7 @@ struct AddProductView: View {
                     }
             }
             .disabled(viewModel.apiCalling)
+            /// Button to add the product after validation.
             Button {
                 var valid: Bool = false
                 withAnimation(.smooth) { valid = isValid() }
@@ -106,14 +111,17 @@ struct AddProductView: View {
             }
             .disabled(viewModel.apiCalling)
         }
+        /// Sheet for image selection.
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(selectedImage: $selectedImage)
         }
+        /// Alert for displaying success/error message.
         .alert(message, isPresented: $showAlert) {
             Button("Okay", role: .cancel) {
                 dismiss()
             }
         }
+        /// Observing product addition response.
         .onReceive(viewModel.$addProductResponse) { addProductResponse in
             if let addProductResponse {
                 message = addProductResponse.message
@@ -127,24 +135,25 @@ struct AddProductView: View {
         .padding(.horizontal)
         .frame(maxWidth: .infinity)
     }
-    
-    @ViewBuilder var dropdownLabel: some View {
+    @ViewBuilder
+    var dropdownLabel: some View {
         HStack {
             Text(!productType.isEmpty ? productType : "Choose product type")
             Spacer()
             Image(systemName: "chevron.down")
         }
-        .foregroundStyle(!productType.isEmpty ? .black : .gray.opacity(0.5))
+        .foregroundStyle(!productType.isEmpty ? .black : themeColor)
         .contentShape(Rectangle())
         .padding(10)
         .overlay {
             RoundedRectangle(cornerRadius: 6)
                 .stroke()
-                .fill(.gray.opacity(0.5))
+                .fill(themeColor)
         }
         .padding(.vertical, 10)
     }
     
+    /// Calls the view model to add the product.
     func addProduct() {
         let image = selectedImage
         viewModel.addProduct(
@@ -157,17 +166,19 @@ struct AddProductView: View {
         ])
     }
     
+    /// Validates the form inputs before submission.
     func isValid() -> Bool {
-        if productType.isEmpty {
+        if !productType.isEmpty { productTypeErrorMessage = "" }
+        if !productNameModel.validate() {
+            return false
+        } else if productType.isEmpty {
             productTypeErrorMessage = "Product type is required"
             return false
-        } else {
-            productTypeErrorMessage = nil
-            let valid: Bool = productNameModel.validate() &&
-            priceModel.validate() &&
-            !productType.isEmpty &&
-            taxModel.validate()
-            return valid
+        } else if !priceModel.validate() {
+            return false
+        } else if !taxModel.validate() {
+            return false
         }
+        return true
     }
 }

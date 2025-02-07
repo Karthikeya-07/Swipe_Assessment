@@ -18,16 +18,25 @@ struct ProductsList: View {
     @State private var viewAppeared: Bool = false
     @State private var showAddProductView: Bool = false
     @Query var favorites: [ProductModel]
-    private let columns = [
-        GridItem(.flexible(), spacing: 10),
-        GridItem(.flexible(), spacing: 10)
-    ]
+    @State var message: String = .init()
+    @State var showToast: Bool = false
+    private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 10), count: 2)
+    
+    init() { configureNavTitle() }
+    
     var body: some View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(filteredProducts) { product in
-                        ProductView(product: product)
+                        ProductView(product: product) { liked, productName in
+                            if liked {
+                                message = "\(productName) added to favorites."
+                            } else {
+                                message = "\(productName) removed from favorites."
+                            }
+                            showToast = true
+                        }
                     }
                 }
                 .navigationTitle("Products")
@@ -62,7 +71,9 @@ struct ProductsList: View {
                     productsListViewModel.getProducts()
                 }
             }
+            .toast(message, show: $showToast)
             .onChange(of: query) { oldQuery, newQuery in
+                // Filter and rearrange products based on the search query
                 withAnimation(.smooth) {
                     if newQuery.isEmpty {
                         let tempFilteredProducts = products
@@ -80,6 +91,7 @@ struct ProductsList: View {
                 bringFavoritesToFront(productModels: favorites, products: products)
             }
             .onReceive(productsListViewModel.$apiCalling) { apiCalling in
+                // Update API calling status for showing loading indicator
                 self.apiCalling = apiCalling
             }
             .sheet(isPresented: $showAddProductView) {
@@ -87,6 +99,7 @@ struct ProductsList: View {
                     withAnimation(.smooth) {
                         filteredProducts.insert(product, at: .zero)
                     }
+                    // Insert new product at the top
                     products.insert(product, at: .zero)
                     bringFavoritesToFront(productModels: favorites, products: filteredProducts)
                 }
@@ -98,6 +111,7 @@ struct ProductsList: View {
         }
     }
     
+    /// Updates the product list to ensure favorite products appear at the top.
     func bringFavoritesToFront(productModels: [ProductModel], products: [Product]) {
         var tempProducts = products
         for i in tempProducts.indices {
@@ -107,5 +121,16 @@ struct ProductsList: View {
         withAnimation(.smooth) {
             self.filteredProducts = tempProducts.filter(\.isSelected) + tempProducts.filter(\.isNotSelected)
         }
+    }
+    
+    /// Configures the navigation bar appearance with a transparent background and blue text.
+    func configureNavTitle() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.systemBlue]
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.systemBlue]
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
     }
 }
