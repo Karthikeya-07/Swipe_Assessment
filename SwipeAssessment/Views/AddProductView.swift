@@ -11,10 +11,6 @@ import UniformTypeIdentifiers
 
 struct AddProductView: View {
     @Environment(\.dismiss) var dismiss
-    @State var productName: String = ""
-    @State var productType: String = ""
-    @State var price: String = ""
-    @State var tax: String = ""
     @StateObject var viewModel: ProductsListViewModel = .init()
     @State var addProductCompletion: ((Product) -> Void)
     @State var selectedImage: UIImage? = nil
@@ -22,9 +18,11 @@ struct AddProductView: View {
     @State var showAlert: Bool = false
     @State var message: String = ""
     @State var productNameModel: TextFieldInputModel = .init(title: "Product Name", text: "")
-    @State var productTypeModel: TextFieldInputModel = .init(title: "Product Type", text: "")
+    @State var productType: String = ""
+    @State var productTypeErrorMessage: String? = nil
     @State var priceModel: TextFieldInputModel = .init(title: "Price", text: "", isNumber: true)
     @State var taxModel: TextFieldInputModel = .init(title: "Tax", text: "", isNumber: true)
+    var productTypes: [String] = ["Electronics", "Clothing", "Sports"]
     var body: some View {
         VStack(alignment: .center) {
             VStack {
@@ -51,11 +49,21 @@ struct AddProductView: View {
                     .clipShape(Circle())
                     .onTapGesture { showImagePicker = true }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom)
-            VStack(spacing: .zero) {
+            VStack(alignment: .leading, spacing: .zero) {
                 CustomTextField(inputModel: $productNameModel)
-                CustomTextField(inputModel: $productTypeModel)
+                Menu {
+                    ForEach(productTypes.indices, id: \.self) { i in
+                        Button(productTypes[i]) {
+                            productType = productTypes[i]
+                        }
+                    }
+                } label: {
+                    dropdownLabel
+                }
+                if let productTypeErrorMessage {
+                    Text(productTypeErrorMessage)
+                        .foregroundStyle(.red)
+                }
                 CustomTextField(inputModel: $priceModel)
                 CustomTextField(inputModel: $taxModel)
             }
@@ -79,7 +87,7 @@ struct AddProductView: View {
                 var valid: Bool = false
                 withAnimation(.smooth) { valid = isValid() }
                 if valid {
-//                    addProduct()
+                    addProduct()
                 }
             } label: {
                 Rectangle()
@@ -120,23 +128,46 @@ struct AddProductView: View {
         .frame(maxWidth: .infinity)
     }
     
+    @ViewBuilder var dropdownLabel: some View {
+        HStack {
+            Text(!productType.isEmpty ? productType : "Choose product type")
+            Spacer()
+            Image(systemName: "chevron.down")
+        }
+        .foregroundStyle(!productType.isEmpty ? .black : .gray.opacity(0.5))
+        .contentShape(Rectangle())
+        .padding(10)
+        .overlay {
+            RoundedRectangle(cornerRadius: 6)
+                .stroke()
+                .fill(.gray.opacity(0.5))
+        }
+        .padding(.vertical, 10)
+    }
+    
     func addProduct() {
         let image = selectedImage
         viewModel.addProduct(
             images: image != nil ? [image!] : [],
             params: [
-            "product_name" : productName,
+            "product_name" : productNameModel.text,
             "product_type" : productType,
-            "price" : price.toDouble() ?? .zero,
-            "tax" : tax.toDouble() ?? .zero
+            "price" : priceModel.text.toDouble() ?? .zero,
+            "tax" : taxModel.text.toDouble() ?? .zero
         ])
     }
     
     func isValid() -> Bool {
-        let valid: Bool = productNameModel.validate() &&
-        productTypeModel.validate() &&
-        priceModel.validate() &&
-        taxModel.validate()
-        return valid
+        if productType.isEmpty {
+            productTypeErrorMessage = "Product type is required"
+            return false
+        } else {
+            productTypeErrorMessage = nil
+            let valid: Bool = productNameModel.validate() &&
+            priceModel.validate() &&
+            !productType.isEmpty &&
+            taxModel.validate()
+            return valid
+        }
     }
 }

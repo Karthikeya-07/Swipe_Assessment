@@ -47,17 +47,12 @@ class NetworkHelper {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-
         var body = Data()
-
-        // Append text parameters
         for (key, value) in params {
             body.append("--\(boundary)\r\n".data(using: .utf8)!)
             body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
             body.append("\(value)\r\n".data(using: .utf8)!)
         }
-
-        // Append image if available
         if let imageParamName {
             for image in images {
                 if let imageData = image.jpegData(compressionQuality: 0.8) {
@@ -72,11 +67,8 @@ class NetworkHelper {
                 }
             }
         }
-
-
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         request.httpBody = body
-
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error {

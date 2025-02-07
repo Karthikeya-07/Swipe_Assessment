@@ -10,6 +10,7 @@ import SwiftData
 
 struct ProductsList: View {
     @StateObject private var productsListViewModel: ProductsListViewModel = .init()
+    @StateObject private var networkMonitor: NetworkMonitor = .init()
     @State private var products: [Product] = []
     @State private var filteredProducts: [Product] = []
     @State private var query: String = ""
@@ -90,6 +91,9 @@ struct ProductsList: View {
                     bringFavoritesToFront(productModels: favorites, products: filteredProducts)
                 }
                 .interactiveDismissDisabled(true)
+            }
+            .onReceive(networkMonitor.$isConnected) { networkStatus in
+                print("Network Status", networkStatus)
             }
         }
     }
