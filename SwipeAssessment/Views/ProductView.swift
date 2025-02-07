@@ -12,6 +12,8 @@ struct ProductView: View {
     @Environment(\.modelContext) var context
     @Query var favorites: [ProductModel]
     var product: Product
+    var completion: ((Bool, String) -> Void) = { _, _ in }
+    
     var body: some View {
         VStack(spacing: 7) {
             AsyncImage(url: URL(string: product.image)) { phase in
@@ -28,6 +30,7 @@ struct ProductView: View {
                         .clipped()
                 }
             }
+            
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 7) {
                     Text(product.productName.isEmpty ? "---" : product.productName)
@@ -38,10 +41,14 @@ struct ProductView: View {
                         .foregroundStyle(product.isSelected ? .red : .black)
                         .onTapGesture {
                             if let firstFavoriteProduct = favorites.first(where: { $0.productName == product.productName }) {
+                                // Remove from favorites
                                 context.delete(firstFavoriteProduct)
+                                completion(false, firstFavoriteProduct.productName)
                             } else {
+                                // Add to favorites
                                 let productModel = ProductModel(product: product)
                                 context.insert(productModel)
+                                completion(true, productModel.productName)
                             }
                         }
                 }
@@ -54,10 +61,11 @@ struct ProductView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 15)
+            
             Spacer()
         }
         .padding(.bottom, 15)
-        .background(.white)
+        .background(.whiteAndBlack) // Adaptive background for light/dark mode
         .clipShape(RoundedRectangle(cornerRadius: 15))
     }
 }

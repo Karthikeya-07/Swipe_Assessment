@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct CustomTextField: View {
-    @Binding var inputModel: TextFieldInputModel
+    @Binding var inputModel: TextFieldInputModel // Data model for text input
     @State var showTitle: Bool = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: .zero) {
             TextField(inputModel.title, text: $inputModel.text)
@@ -36,6 +37,7 @@ struct CustomTextField: View {
                     }
                 }
                 .onChange(of: inputModel.text) { oldValue, newValue in
+                    // Ensure valid number input when keyboard is of number type
                     if inputModel.isNumber {
                         if newValue == "." || newValue.isEmpty {
                             inputModel.text = newValue
@@ -44,6 +46,7 @@ struct CustomTextField: View {
                         }
                     }
                 }
+            // Display an error message if provided
             if let errorMessage = inputModel.errorMessage {
                 Text(errorMessage)
                     .foregroundColor(.red)
@@ -51,3 +54,4 @@ struct CustomTextField: View {
         }
     }
 }
+

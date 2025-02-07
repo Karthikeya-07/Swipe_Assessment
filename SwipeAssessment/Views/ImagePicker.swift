@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct ImagePicker: UIViewControllerRepresentable {
-    @Binding var selectedImage: UIImage?
-    @Environment(\.dismiss) var dismiss
+    @Binding var selectedImage: UIImage? // Stores the selected image
+    @Environment(\.dismiss) var dismiss // Dismiss action for closing the picker
+    
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         let parent: ImagePicker
 
@@ -23,7 +24,7 @@ struct ImagePicker: UIViewControllerRepresentable {
             } else {
                 parent.selectedImage = nil
             }
-            parent.dismiss()
+            parent.dismiss() // Dismiss picker after selection
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -39,7 +40,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
         picker.sourceType = .photoLibrary
-        picker.allowsEditing = true
+        picker.allowsEditing = true // Enables image editing before selection
         picker.modalPresentationStyle = .fullScreen
         return picker
     }
