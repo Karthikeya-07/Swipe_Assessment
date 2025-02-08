@@ -11,26 +11,23 @@ import SwiftData
 struct ProductView: View {
     @Environment(\.modelContext) var context
     @Query var favorites: [ProductModel]
-    var product: Product
+    @Binding var product: Product
     var completion: ((Bool, String) -> Void) = { _, _ in }
-    
+    @State var viewId: UUID = .init()
     var body: some View {
         VStack(spacing: 7) {
             AsyncImage(url: URL(string: product.image)) { phase in
-                if let image = phase.image {
-                    image.resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 80)
-                        .clipped()
+                if let image = ImageCacheManager.shared.image(forKey: product.image) {
+                    return image.prodctImageConfig()
                 } else {
-                    Image("placeholder")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 80)
-                        .clipped()
+                    if let image = phase.image {
+                        ImageCacheManager.shared.set(image, forKey: product.image)
+                        return image.prodctImageConfig()
+                    } else {
+                        return Image("placeholder").prodctImageConfig()
+                    }
                 }
             }
-            
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 7) {
                     Text(product.productName.isEmpty ? "---" : product.productName)
@@ -38,7 +35,7 @@ struct ProductView: View {
                         .font(.system(size: 16, weight: .medium))
                     Spacer(minLength: .zero)
                     Image(systemName: product.isSelected ? "heart.fill" : "heart")
-                        .foregroundStyle(product.isSelected ? .red : .black)
+                        .foregroundStyle(product.isSelected ? .red : .primary)
                         .onTapGesture {
                             if let firstFavoriteProduct = favorites.first(where: { $0.productName == product.productName }) {
                                 // Remove from favorites
@@ -49,6 +46,11 @@ struct ProductView: View {
                                 let productModel = ProductModel(product: product)
                                 context.insert(productModel)
                                 completion(true, productModel.productName)
+                            }
+                            do {
+                                try context.save()
+                            } catch let error {
+                                print(error.localizedDescription)
                             }
                         }
                 }

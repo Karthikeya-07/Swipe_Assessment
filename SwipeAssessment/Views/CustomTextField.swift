@@ -20,14 +20,18 @@ struct CustomTextField: View {
                 .overlay {
                     RoundedRectangle(cornerRadius: 6)
                         .stroke()
-                        .fill(.gray.opacity(0.5))
+                        .fill(.primary)
                 }
                 .padding(.vertical, 10)
                 .overlay(alignment: showTitle ? .topLeading : .leading) {
                     if showTitle {
                         Text(inputModel.title)
-                            .foregroundStyle(.gray)
-                            .background(.white)
+                            .foregroundStyle(.white)
+                            .font(.system(size: 12, weight: .semibold))
+                            .padding(.vertical, 2.5)
+                            .padding(.horizontal, 5)
+                            .background(.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 5))
                             .padding(.leading, 10)
                     }
                 }
