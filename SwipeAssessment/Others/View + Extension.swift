@@ -14,7 +14,7 @@ extension View {
             self
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(height: 80)
+                .frame(height: 100)
                 .clipped()
         )
     }
