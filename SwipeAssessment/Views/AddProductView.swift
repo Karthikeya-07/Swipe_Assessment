@@ -22,7 +22,7 @@ struct AddProductView: View {
     @State var productTypeErrorMessage: String? = nil
     @State var priceModel: TextFieldInputModel = .init(title: "Price", text: "", isNumber: true)
     @State var taxModel: TextFieldInputModel = .init(title: "Tax", text: "", isNumber: true)
-    var themeColor: Color = .gray.opacity(0.5)
+    var themeColor: Color = .primary
     var productTypes: [String] = ["Electronics", "Clothing", "Sports"]
     
     var body: some View {
@@ -39,11 +39,11 @@ struct AddProductView: View {
                                 .resizable()
                                 .clipped()
                         } else {
-                                Image(systemName: "camera")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .foregroundStyle(themeColor)
-                                    .frame(width: 40, height: 40)
+                            Image(systemName: "camera")
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundStyle(themeColor)
+                                .frame(width: 40, height: 40)
                         }
                     }
                     .clipShape(Circle())
@@ -57,7 +57,9 @@ struct AddProductView: View {
                 Menu {
                     ForEach(productTypes.indices, id: \.self) { i in
                         Button(productTypes[i]) {
-                            productType = productTypes[i]
+                            withAnimation(.smooth) {
+                                productType = productTypes[i]
+                            }
                         }
                     }
                 } label: {
@@ -110,6 +112,8 @@ struct AddProductView: View {
                     }
             }
             .disabled(viewModel.apiCalling)
+            .padding(.bottom, 100)
+            Spacer()
         }
         /// Sheet for image selection.
         .sheet(isPresented: $showImagePicker) {
@@ -132,8 +136,30 @@ struct AddProductView: View {
                 showAlert = true
             }
         }
-        .padding(.horizontal)
-        .frame(maxWidth: .infinity)
+        .padding()
+        .frame(maxHeight: .infinity)
+        .background {
+            if let selectedImage {
+                Image(uiImage: selectedImage)
+                    .resizable()
+                    .scaledToFill()
+                    .blur(radius: 20)
+            } else {
+                LinearGradient(
+                    colors: [
+                        .blue.opacity(0.5),
+                        .blue.opacity(0.25),
+                        .blue.opacity(0.5),
+                        .blue.opacity(0.25),
+                        .blue.opacity(0.5)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .blur(radius: 3)
+            }
+        }
+        .ignoresSafeArea()
     }
     @ViewBuilder
     var dropdownLabel: some View {
@@ -142,7 +168,7 @@ struct AddProductView: View {
             Spacer()
             Image(systemName: "chevron.down")
         }
-        .foregroundStyle(!productType.isEmpty ? .black : themeColor)
+        .foregroundStyle(!productType.isEmpty ? .primary : Color(uiColor: .placeholderText))
         .contentShape(Rectangle())
         .padding(10)
         .overlay {
@@ -151,6 +177,18 @@ struct AddProductView: View {
                 .fill(themeColor)
         }
         .padding(.vertical, 10)
+        .overlay(alignment: .topLeading) {
+            if !productType.isEmpty {
+                Text("Choose product type")
+                    .foregroundStyle(.white)
+                    .font(.system(size: 12, weight: .semibold))
+                    .padding(.vertical, 2.5)
+                    .padding(.horizontal, 5)
+                    .background(.blue)
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .padding(.leading, 10)
+            }
+        }
     }
     
     /// Calls the view model to add the product.

@@ -28,7 +28,7 @@ struct ProductsList: View {
         NavigationStack {
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(filteredProducts) { product in
+                    ForEach($filteredProducts) { product in
                         ProductView(product: product) { liked, productName in
                             if liked {
                                 message = "\(productName) added to favorites."
@@ -79,12 +79,20 @@ struct ProductsList: View {
                         let tempFilteredProducts = products
                         filteredProducts = tempFilteredProducts.filter(\.isSelected) + tempFilteredProducts.filter(\.isNotSelected)
                     } else {
-                        let tempFilteredProducts = products.filter { $0.productName.lowercased().contains(newQuery.lowercased()) }
+                        let tempFilteredProducts = products.filter {
+                            var propertiesToSearch: [String] = []
+                            propertiesToSearch.append($0.productName.lowercased())
+                            propertiesToSearch.append($0.productType.lowercased())
+                            return !propertiesToSearch.filter { property in
+                                property.contains(newQuery.lowercased())
+                            }.isEmpty
+                        }
                         filteredProducts = tempFilteredProducts.filter(\.isSelected) + tempFilteredProducts.filter(\.isNotSelected)
                     }
                 }
             }
             .onReceive(productsListViewModel.$products) { products in
+                checkForFailedProducts()
                 bringFavoritesToFront(productModels: favorites, products: products)
             }
             .onChange(of: favorites) { oldFavorites, newFavorites in
@@ -132,5 +140,9 @@ struct ProductsList: View {
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
+    }
+    
+    func checkForFailedProducts() {
+        print("No Pending Updates")
     }
 }
