@@ -43,4 +43,4 @@ Tech Stack & Best Practices
 	•	Framework: SwiftUI
 	•	Architecture: MVVM
 	•	API Handling: URLSession
-	•	Local Data Storage: UserDefaults (for favorites
+	•	Local Data Storage: SwiftData (for favorites)
